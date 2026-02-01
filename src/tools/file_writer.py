@@ -15,7 +15,7 @@ def write_file(path_to_file :str, content:str):
            with open(path_to_file, 'w', encoding='utf-8') as file:
            file.write(content)
        except PermissionError as e
-           raise PermissionError(f"Failed to write file {fullpath}: {e}")
+           raise PermissionError(f"No permission to write file {fullpath}: {e}")
        except Exception as e:
            raise Exception(f"Failed to write file {fullpath}: {e}")
            return False
