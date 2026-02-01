@@ -18,11 +18,13 @@ def read_dir(path_to_dir:str):
        content={}
        path = Path(path_to_dir)
        if not path.is_dir():
-         raise Exception(f"{path_to_dir} is not a valid directory")
+         raise FileNotFoundError(f"{path_to_dir} is not a valid directory")
        for file_path in path.rglob("*.py"):
-        try:
-            content[str(file_path)] = read_file(path_to_dir, file_path.name)
-        except Exception as e:
-            content[str(file_path)] = f"ERROR: {e}"
+           try:
+               content[str(file_path)] = read_file(path_to_dir, file_path.name)
+           except FileNotFoundError as e:
+                raise
+           except PermissionError as e
+                raise
 
        return content
