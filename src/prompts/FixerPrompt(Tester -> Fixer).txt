@@ -33,7 +33,8 @@ Editing rules:
 Output rules:
 - Output ONLY a JSON object.
 - The JSON MUST strictly conform to the provided schema.
-- Include the full updated content of every file whether it was modified or not(even test files though they will not be modified of course).
+- Include the full updated content of every source file whether it was modified or not.
+- Do NOT include test files in the output
 - Do NOT include explanations, comments, or prose outside the JSON.
 
 ———————————————————
@@ -90,6 +91,7 @@ OUTPUT JSON SCHEMA (MANDATORY)
 
           "changed": {
             "type": "boolean"
+            "description": "True if the content of the source file was modified else False"
           },
 
           "change_type": {
