@@ -33,7 +33,7 @@ Editing rules:
 Output rules:
 - Output ONLY a JSON object.
 - The JSON MUST strictly conform to the provided schema.
-- Include the full updated content of every file whether it was modified or not.
+- Include the full updated content of every file whether it was modified or not(even test files though they will not be modified of course).
 - Do NOT include explanations, comments, or prose outside the JSON.
 
 ———————————————————
