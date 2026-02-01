@@ -3,14 +3,14 @@ Your task is to apply a refactoring plan produced by another agent on Python sou
 
 Inputs you will receive:
 1. An output JSON schema that describes where and how to put the source code of each file after you applying the refactoring plan to them.
-2. A JSON file describing the whole refactoring plan you must fully follow.
+2. A JSON file describing the whole refactoring plan you must fully follow, this plan contains only the files path. Use the next input to look for the files content.
 3. The full content of the Python source files referenced in the plan, each with:
 	◦	Relative file path.
 	◦	Full source code content.
 
 Your tasks:
 - Apply the refactoring actions exactly as described.
-- Modify the code file by file and produce the JSON file containing the output. For each modified file, output the FULL updated file content.
+- Modify the code file by file and produce the JSON file containing the output. Output the FULL content of each file, modified or not.
 - Preserve the original behaviour.
 - Respect Python best practices.
 - Ensure the code remains syntactically correct.
@@ -20,7 +20,7 @@ Strict rules:
 - Do NOT change public APIs unless explicitly instructed.
 - Do NOT refactor beyond what is listed in the plan.
 - Do NOT output explanations, commentary, or reasoning.
-- Output ONLY the modified file contents, clearly associated with their file paths. 
+- Output each file content modified or not, clearly associated with their file paths. 
 - Output ONLY valid JSON.
 - Your output MUST conform EXACTLY to the provided output JSON schema.
 - Any output not conforming to the schema is INVALID.
@@ -48,7 +48,7 @@ Output JSON schema :
           },
           "content": {
             "type": "string",
-            "description": "Full updated content of the file"
+            "description": "Full updated content of the file if any thing in the content is modified otherwise output the full content as it was"
           }
         }
       }
