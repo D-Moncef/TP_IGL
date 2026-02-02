@@ -1,7 +1,3 @@
-import os
-from file_reader import read_file, read_dir
-from file_writer import write_file
-from pylint_inal import analyse_file
 import subprocess
 
 def run_pytest(target_dir: str):
@@ -24,9 +20,4 @@ def run_pytest(target_dir: str):
         }
 
     except Exception as e:
-        return {
-            "passed": False,
-            "returncode": -1,
-            "stdout": "",
-            "stderr": str(e)
-        }
+        raise Exception("Failed to execute pytest!")
