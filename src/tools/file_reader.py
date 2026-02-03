@@ -24,7 +24,7 @@ def read_dir(path_to_dir:str):
                content[str(file_path)] = read_file(path_to_dir, file_path.name)
            except FileNotFoundError as e:
                 raise
-           except PermissionError as e
+           except PermissionError as e:
                 raise
 
        return content
