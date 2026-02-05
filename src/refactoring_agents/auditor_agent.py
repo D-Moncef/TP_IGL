@@ -1,4 +1,5 @@
 # src/refactoring_agents/fixer_agent.py
+from json import JSONDecodeError
 from src.utils.logger import log_experiment, ActionType
 from src.llm.llm_service import LLMService
 from src.tools.file_reader import read_dir
@@ -12,6 +13,7 @@ class AuditorAgent:
         self.name = "AUDITOR"
 
     def run(self, state : SystemState):
+        stage = None
         state.auditor_state.start_job()
 
         try:

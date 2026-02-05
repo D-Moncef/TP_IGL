@@ -1,11 +1,12 @@
 # src/refactoring_agents/tester_agent.py
+from json import JSONDecodeError
 from src.utils.logger import log_experiment, ActionType
 from src.llm.llm_service import LLMService
 from src.tools.file_reader import read_dir, read_dir_separate
 from src.tools.file_writer import write_file
-from src.tools.pylint_inal import analyse_file
 from src.tools.test_sendbox import run_pytest
 from core.state import SystemState
+from src.utils.logger import ActionType
 import json
 
 class TesterAgent:
@@ -14,8 +15,9 @@ class TesterAgent:
         self.name = "TESTER"
 
     def generate_tests(self, state : SystemState):
+        file_path = None
+        stage = None
         state.tester_state.start_job()
-
         try:
 
             # --------------------------------------------------
@@ -110,7 +112,7 @@ class TesterAgent:
             log_experiment(
                 agent_name=self.name,
                 model_used="gemini-2.5-flash",
-                action=ActionType.CODE_GEN,
+                action=ActionType.GENERATION,
                 details={
                     "input_prompt": prompt,
                     "output_response": output_str
@@ -118,14 +120,14 @@ class TesterAgent:
                 status="SUCCESS"
             )
         except RuntimeError as e:
-            state.auditor_state.add_error(
+            state.tester_state.add_error(
                 stage=stage,
                 message=str(e),
                 exception=e
             )
             return False
         except Exception as e:
-            state.auditor_state.add_error(
+            state.tester_state.add_error(
                 stage="TEST_GENERATION",
                 message="Unexpected test generation failure",
                 exception=e
@@ -137,7 +139,8 @@ class TesterAgent:
 
     def test_and_judge(self, state : SystemState):
         state.tester_state.start_job()
-
+        file_path = None
+        stage = None
         try:
             # --------------------------------------------------
             # 1. READ SOURCE FILES AND TEST FILES SEPARATELY
@@ -231,7 +234,7 @@ class TesterAgent:
         # 8. ERROR HANDLING
         # --------------------------------------------------
         except RuntimeError as e:
-            state.fixer_state.add_error(
+            state.tester_state.add_error(
                 stage=stage,
                 message=str(e),
                 file=file_path,
@@ -239,7 +242,7 @@ class TesterAgent:
             )
             return 2
         except Exception as e:
-            state.fixer_state.add_error(
+            state.tester_state.add_error(
                 stage="FIX",
                 message="Unexpected judge failure",
                 file=file_path,

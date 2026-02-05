@@ -28,21 +28,22 @@ def main():
         content = f.read()
 
     key = content.split("=")[1]
-    state : SystemState
+    system_state : SystemState = SystemState(target_dir=args.target_dir)
     llm : LLMService = LLMService(key)
     auditor : AuditorAgent = AuditorAgent(llm)
     fixer : FixerAgent = FixerAgent(llm)
     tester : TesterAgent = TesterAgent(llm)
-    orchestrator : RefactoringOrchestrator = RefactoringOrchestrator(state,auditor,fixer,tester)
+    orchestrator : RefactoringOrchestrator = RefactoringOrchestrator(system_state,auditor,fixer,tester)
 
     print(f"🚀 DEMARRAGE SUR : {args.target_dir}")
-    log_experiment("System", "STARTUP", f"Target: {args.target_dir}", "INFO")
+    #log_experiment("System", "STARTUP", f"Target: {args.target_dir}", "INFO")
 
     data_officer : DataOfficer = DataOfficer()
     try :
         if orchestrator.run() :
             data_officer.validate_logs()
             print("✅ MISSION_COMPLETE")
+            print(SystemState.system_errors)
     except TelemetryValidationError as e:
         raise
 

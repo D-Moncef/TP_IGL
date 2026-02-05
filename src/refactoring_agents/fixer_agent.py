@@ -1,4 +1,5 @@
 # src/refactoring_agents/auditor_agent.py
+from json import JSONDecodeError
 from src.utils.logger import log_experiment, ActionType
 from src.llm.llm_service import LLMService
 from src.tools.file_reader import read_dir, read_dir_separate
@@ -13,6 +14,8 @@ class FixerAgent:
         self.name = "FIXER"
 
     def run(self, state : SystemState):
+        stage = None
+        file_path = None
         state.fixer_state.start_job()
 
         try:
@@ -89,7 +92,7 @@ class FixerAgent:
                             + "\n\nThe full content of all project source files with their relative paths :\n"
                             + json.dumps(files["source_files"], indent=2)
                             + "\n\n The full content of all test files with their relative paths :\n"
-                            + json.dumps(files["test_file"], indent=2)
+                            + json.dumps(files["test_files"], indent=2)
                     )
                 except (TypeError, ValueError) as e:
                     stage = "BUILDING_PROMPT"

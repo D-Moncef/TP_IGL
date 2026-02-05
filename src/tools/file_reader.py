@@ -9,7 +9,7 @@ def read_file(path_to_file :str,file_name:str ):
            raise Exception("file {file_name} format not  valid ")
        
        with open(fullpath, 'r') as file:
-              content = file.read();
+              content = file.read()
      
       
        
