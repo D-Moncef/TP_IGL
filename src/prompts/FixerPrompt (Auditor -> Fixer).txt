@@ -24,6 +24,8 @@ Strict rules:
 - Output ONLY valid JSON.
 - Your output MUST conform EXACTLY to the provided output JSON schema.
 - Any output not conforming to the schema is INVALID.
+- Do not include separators or decoration.
+- The response must start with '{' and end with '}'.
 
 Output JSON schema :
 {

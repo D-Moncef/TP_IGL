@@ -7,7 +7,7 @@ Inputs you will receive:
     - Relative file path.
     - pylint score.
     - pylint messages.
-    - Full source code content. 
+    - Full source code content.
 Your tasks:
 - Analyze the provided Python source files.
 - Identify code quality issues supported by:
@@ -16,13 +16,22 @@ Your tasks:
 - For each issue, produce a refactoring action that:
 	◦	Improves code quality.
 	◦	Preserves existing behavior.
-- Assign a priority level to each action. 
+- Assign a priority level to each action.
 Strict rules:
 - Do NOT modify code.
 - Do NOT propose behavioural changes.
 - Do NOT invent issues not supported by the input or by observable evidence in the provided source code.
 - Do NOT include explanations, commentary, or code outside the provided JSON schema.
-- Your entire output MUST conform exactly to the provided JSON schema. 
+- Your entire output MUST conform exactly to the provided JSON schema.
+- Do not include markdown.
+- Do not include explanations.
+- Do not include separators or decoration.
+- Do NOT use ``` or triple-quoted strings.
+- All newline characters inside strings MUST be escaped as \\n.
+- Do NOT include literal newlines inside JSON strings.
+- All quotes inside strings MUST be escaped.
+- The response must start with '{' and end with '}'.
+
 Refactoring plan JSON schema:
 {
   "$schema": "http://json-schema.org/draft-07/schema#",

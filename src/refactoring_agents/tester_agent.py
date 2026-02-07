@@ -4,6 +4,7 @@ from src.utils.logger import log_experiment, ActionType
 from src.llm.llm_service import LLMService
 from src.tools.file_reader import read_dir, read_dir_separate
 from src.tools.file_writer import write_file
+from src.tools.extract_json import extract_json, sanitize_llm_json
 from src.tools.test_sendbox import run_pytest
 from core.state import SystemState
 from src.utils.logger import ActionType
@@ -60,6 +61,8 @@ class TesterAgent:
             # --------------------------------------------------
             try:
                 output_str = self.llm.generate(prompt)
+                output_str = extract_json(output_str)
+                output_str = sanitize_llm_json(output_str)
             except TimeoutError as e:
                 stage = "CALLING_LLM"
                 raise RuntimeError("LLM request timed out") from e
@@ -71,6 +74,9 @@ class TesterAgent:
             # 5. PARSE LLM OUTPUT
             # --------------------------------------------------
             try:
+                print("*********************************************************************************")
+                print(output_str)
+                print("*********************************************************************************")
                 output = json.loads(output_str)
             except JSONDecodeError as e:
                 stage = "PARSING_LLM_OUTPUT"
@@ -81,23 +87,12 @@ class TesterAgent:
             # --------------------------------------------------
             state.tester_state.output = output
 
-            log_experiment(
-                agent_name=self.name,
-                model_used="gemini-2.5-flash",
-                action=ActionType.GENERATION,
-                details={
-                    "input_prompt": prompt,
-                    "output_response": output_str
-                },
-                status="SUCCESS"
-            )
-
             # --------------------------------------------------
             # 7. WRITE TEST FILES
             # --------------------------------------------------
             try:
-                for file in output["test"]:
-                        file_path = file["file_path"]
+                for file in output["tests"]:
+                        file_path = ("sandbox/"+file["file_path"])
                         write_file(file_path, file["content"], True)
             except PermissionError as e:
                 stage = "WRITING_TEST_FILES"
@@ -125,14 +120,16 @@ class TesterAgent:
                 message=str(e),
                 exception=e
             )
-            return False
+            raise e
+            #return False
         except Exception as e:
             state.tester_state.add_error(
                 stage="TEST_GENERATION",
                 message="Unexpected test generation failure",
                 exception=e
             )
-            return False
+            raise e
+            #return False
 
         state.tester_state.finish_job()
         return True
@@ -195,6 +192,8 @@ class TesterAgent:
             # --------------------------------------------------
             try:
                 output_str = self.llm.generate(prompt)
+                output_str = extract_json(output_str)
+                output_str = sanitize_llm_json(output_str)
             except TimeoutError as e:
                 stage = "CALLING_LLM"
                 raise RuntimeError("LLM request timed out") from e
@@ -240,7 +239,8 @@ class TesterAgent:
                 file=file_path,
                 exception=e
             )
-            return 2
+            raise e
+            #return 2
         except Exception as e:
             state.tester_state.add_error(
                 stage="FIX",
@@ -248,7 +248,8 @@ class TesterAgent:
                 file=file_path,
                 exception=e
             )
-            return 2
+            raise e
+            #return 2
 
         state.tester_state.finish_job()
 

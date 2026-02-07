@@ -12,7 +12,7 @@ Inputs you will receive:
 1. The json schema your output must conform to.
 2. The raw pytest execution output (stdout + stderr).
 3. The full content of all test files that were executed.
-4. The full content of all Python source files under test. 
+4. The full content of all Python source files under test.
 Your tasks:
 1. Determine the mission status:
    - If all tests passed, the mission status is SUCCESS.
@@ -36,7 +36,16 @@ Strict rules:
 - Do NOT speculate beyond the provided information.
 - Do NOT suggest new features.
 - Do NOT include explanations or commentary.
-- Output ONLY a JSON object that strictly conforms to the provided JSON schema. 
+- Output ONLY a JSON object that strictly conforms to the provided JSON schema.
+- Do not include markdown.
+- Do not include explanations.
+- Do not include separators or decoration.
+- Do NOT use ``` or triple-quoted strings.
+- All newline characters inside strings MUST be escaped as \\n.
+- Do NOT include literal newlines inside JSON strings.
+- All quotes inside strings MUST be escaped.
+- The response must start with '{' and end with '}'.
+
 ———————————————————
 OUTPUT JSON SCHEMA (MANDATORY)
 ———————————————————

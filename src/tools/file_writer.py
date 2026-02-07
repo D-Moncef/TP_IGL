@@ -1,5 +1,10 @@
 from pathlib import Path
 
+def normalize_newlines(text: str) -> str:
+    """
+    Converts escaped sequences like '\\n' into real newlines.
+    """
+    return text.encode("utf-8").decode("unicode_escape")
 
 def write_file(path_to_file: str, content: str, test: bool) -> bool:
     """
@@ -14,31 +19,34 @@ def write_file(path_to_file: str, content: str, test: bool) -> bool:
 
     path = Path(path_to_file)
 
-    if "sandbox" not in path.parts:
-        raise Exception("Path to file is not inside the sandbox")
+    sandbox = Path("sandbox").resolve()
+    full_path = path.resolve()
 
-    if path.suffix != ".py":
-        raise Exception(f"File {path.name} format is not valid (must be .py)")
+    if sandbox not in full_path.parents:
+        raise Exception("File write outside sandbox is forbidden")
+
+    if full_path.suffix != ".py":
+        raise Exception(f"File {full_path.name} format is not valid (must be .py)")
 
     if not test:
-        if not path.exists():
+        if not full_path.exists():
             raise Exception(f"Path {path_to_file} does not exist")
 
     else:
-        if not (path.name.startswith("test_") or path.name.endswith("_test.py")):
+        if not (full_path.name.startswith("test_") or full_path.name.endswith("_test.py")):
             raise Exception(f"Path {path_to_file} is not a valid test file path")
 
         # Create parent directories if needed
-        path.parent.mkdir(parents=True, exist_ok=True)
+        full_path.parent.mkdir(parents=True, exist_ok=True)
 
     # Write file
     try:
-        with open(path, "w", encoding="utf-8") as file:
-            file.write(content)
+        with open(full_path, "w", encoding="utf-8") as file:
+            file.write(normalize_newlines(content))
     except PermissionError as e:
-        raise PermissionError(f"No permission to write file {path}: {e}")
+        raise PermissionError(f"No permission to write file {full_path}: {e}")
     except Exception as e:
-        raise Exception(f"Failed to write file {path}: {e}")
+        raise Exception(f"Failed to write file {full_path}: {e}")
 
     return True
 

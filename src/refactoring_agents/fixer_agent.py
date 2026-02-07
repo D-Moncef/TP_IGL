@@ -4,7 +4,7 @@ from src.utils.logger import log_experiment, ActionType
 from src.llm.llm_service import LLMService
 from src.tools.file_reader import read_dir, read_dir_separate
 from src.tools.file_writer import write_file
-from src.tools.pylint_inal import analyse_file
+from src.tools.extract_json import extract_json, sanitize_llm_json
 from core.state import SystemState
 import json
 
@@ -17,7 +17,6 @@ class FixerAgent:
         stage = None
         file_path = None
         state.fixer_state.start_job()
-
         try:
             file_path = None
             if state.fixer_state.mode.name == "REFACTOR":
@@ -103,6 +102,8 @@ class FixerAgent:
             # --------------------------------------------------
             try:
                 output_str = self.llm.generate(prompt)
+                output_str = extract_json(output_str)
+                output_str = sanitize_llm_json(output_str)
             except TimeoutError as e:
                 stage = "CALLING_LLM"
                 raise RuntimeError("LLM request timed out") from e
@@ -114,6 +115,9 @@ class FixerAgent:
             # 5. PARSE LLM OUTPUT
             # --------------------------------------------------
             try:
+                print("*********************************************************************************")
+                print(output_str)
+                print("*********************************************************************************")
                 output = json.loads(output_str)
             except JSONDecodeError as e:
                 stage = "PARSING_LLM_OUTPUT"
@@ -128,10 +132,15 @@ class FixerAgent:
             # 7. WRITE MODIFIED FILES
             # --------------------------------------------------
             try:
-                for file in output["files"]:
-                    if (file["changed"]):
-                        file_path = file["path"]
+                if state.fixer_state.mode.name == "REFACTOR":
+                    for file in output["files"]:
+                        file_path = file["file_path"]
                         write_file(file_path, file["content"], False)
+                else:
+                    for file in output["files"]:
+                        if (file["changed"]):
+                            file_path = file["path"]
+                            write_file(file_path, file["content"], False)
             except PermissionError as e:
                 stage = "WRITING_MODIFIED_FILES"
                 raise RuntimeError("No permission to write a modified files") from e
@@ -162,7 +171,8 @@ class FixerAgent:
                 file = file_path,
                 exception=e
             )
-            return False
+            raise e
+            #return False
         except Exception as e:
             state.fixer_state.add_error(
                 stage="FIX",
@@ -170,7 +180,8 @@ class FixerAgent:
                 file = file_path,
                 exception=e
             )
-            return False
+            raise e
+            #return False
 
         state.fixer_state.finish_job()
         return True

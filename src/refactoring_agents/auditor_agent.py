@@ -4,6 +4,7 @@ from src.utils.logger import log_experiment, ActionType
 from src.llm.llm_service import LLMService
 from src.tools.file_reader import read_dir
 from src.tools.pylint_inal import analyse_file
+from src.tools.extract_json import extract_json, sanitize_llm_json
 from core.state import SystemState
 import json
 
@@ -78,6 +79,8 @@ class AuditorAgent:
         # --------------------------------------------------
             try:
                 output_str = self.llm.generate(prompt)
+                output_str = extract_json(output_str)
+                output_str = sanitize_llm_json(output_str)
             except TimeoutError as e:
                 stage = "CALLING_LLM"
                 raise RuntimeError("LLM request timed out") from e
@@ -122,14 +125,16 @@ class AuditorAgent:
                 message=str(e),
                 exception=e
             )
-            return False
+            raise e
+            #return False
         except Exception as e:
             state.auditor_state.add_error(
                 stage="AUDIT",
                 message="Unexpected auditor failure",
                 exception=e
             )
-            return False
+            raise e
+            #return False
 
         state.auditor_state.finish_job()
         return True

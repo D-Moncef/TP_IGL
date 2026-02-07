@@ -2,7 +2,6 @@ import argparse
 import sys
 import os
 from dotenv import load_dotenv
-from src.utils.logger import log_experiment
 from src.orchestrator.orchestrator import RefactoringOrchestrator
 from src.refactoring_agents.auditor_agent import AuditorAgent
 from src.refactoring_agents.fixer_agent import FixerAgent
@@ -24,10 +23,11 @@ def main():
         sys.exit(1)
 
     # Declaring the System state, the orchestrator and the different agents :
-    with open(".env", "r", encoding="utf-8") as f:
-        content = f.read()
+    load_dotenv()
+    key = os.getenv("GOOGLE_API_KEY")
+    if not key:
+        raise RuntimeError("GOOGLE_API_KEY not found in .env")
 
-    key = content.split("=")[1]
     system_state : SystemState = SystemState(target_dir=args.target_dir)
     llm : LLMService = LLMService(key)
     auditor : AuditorAgent = AuditorAgent(llm)
