@@ -7,6 +7,7 @@ from src.tools.file_writer import write_file
 from src.tools.extract_json import extract_json, sanitize_llm_json
 from core.state import SystemState
 import json
+import os
 
 class FixerAgent:
     def __init__(self, llm: LLMService):
@@ -115,9 +116,6 @@ class FixerAgent:
             # 5. PARSE LLM OUTPUT
             # --------------------------------------------------
             try:
-                print("*********************************************************************************")
-                print(output_str)
-                print("*********************************************************************************")
                 output = json.loads(output_str)
             except JSONDecodeError as e:
                 stage = "PARSING_LLM_OUTPUT"
@@ -132,15 +130,50 @@ class FixerAgent:
             # 7. WRITE MODIFIED FILES
             # --------------------------------------------------
             try:
+                target_dir = os.path.abspath(state.target_dir)
                 if state.fixer_state.mode.name == "REFACTOR":
                     for file in output["files"]:
-                        file_path = file["file_path"]
-                        write_file(file_path, file["content"], False)
+
+                        relative_path = file["file_path"]
+                        # Normalize
+                        relative_path = os.path.normpath(relative_path)
+
+                        # If LLM returned absolute path → strip to relative
+                        if os.path.isabs(relative_path):
+                            relative_path = os.path.relpath(relative_path, target_dir)
+
+                        # If LLM returned something starting with target_dir → strip it
+                        if relative_path.startswith(state.target_dir + os.sep):
+                            relative_path = os.path.relpath(relative_path, state.target_dir)
+
+                        safe_path = os.path.abspath(os.path.join(target_dir, relative_path))
+
+                        # Verify no escape attempt
+                        if os.path.commonpath([safe_path, target_dir]) != target_dir:
+                            raise RuntimeError("LLM attempted path escape")
+                        write_file(safe_path, file["content"], False)
                 else:
                     for file in output["files"]:
+
+                        relative_path = file["path"]
+                        # Normalize
+                        relative_path = os.path.normpath(relative_path)
+
+                        # If LLM returned absolute path → strip to relative
+                        if os.path.isabs(relative_path):
+                            relative_path = os.path.relpath(relative_path, target_dir)
+
+                        # If LLM returned something starting with target_dir → strip it
+                        if relative_path.startswith(state.target_dir + os.sep):
+                            relative_path = os.path.relpath(relative_path, state.target_dir)
+
+                        safe_path = os.path.abspath(os.path.join(target_dir, relative_path))
+
+                        # Verify no escape attempt
+                        if os.path.commonpath([safe_path, target_dir]) != target_dir:
+                            raise RuntimeError("LLM attempted path escape")
                         if (file["changed"]):
-                            file_path = file["path"]
-                            write_file(file_path, file["content"], False)
+                            write_file(safe_path, file["content"], False)
             except PermissionError as e:
                 stage = "WRITING_MODIFIED_FILES"
                 raise RuntimeError("No permission to write a modified files") from e
@@ -153,7 +186,7 @@ class FixerAgent:
             # --------------------------------------------------
             log_experiment(
                 agent_name=self.name,
-                model_used="gemini-2.5-flash",
+                model_used=self.llm.model,
                 action=ActionType.FIX,
                 details={
                     "input_prompt": prompt,

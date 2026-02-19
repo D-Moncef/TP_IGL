@@ -9,6 +9,7 @@ from src.refactoring_agents.tester_agent import TesterAgent
 from core.state import SystemState
 from src.llm.llm_service import LLMService
 from src.data_management.data_officer import DataOfficer,TelemetryValidationError
+from src.utils.logger import log_experiment
 
 load_dotenv()
 
@@ -24,7 +25,7 @@ def main():
 
     # Declaring the System state, the orchestrator and the different agents :
     load_dotenv()
-    key = os.getenv("GOOGLE_API_KEY")
+    key = os.getenv("MISTRAL_API_KEY")
     if not key:
         raise RuntimeError("GOOGLE_API_KEY not found in .env")
 
@@ -36,14 +37,14 @@ def main():
     orchestrator : RefactoringOrchestrator = RefactoringOrchestrator(system_state,auditor,fixer,tester)
 
     print(f"🚀 DEMARRAGE SUR : {args.target_dir}")
-    #log_experiment("System", "STARTUP", f"Target: {args.target_dir}", "INFO")
+    log_experiment("System","unknown", "STARTUP", f"Target: {args.target_dir}", "INFO")
 
     data_officer : DataOfficer = DataOfficer()
     try :
         if orchestrator.run() :
             data_officer.validate_logs()
             print("✅ MISSION_COMPLETE")
-            print(SystemState.system_errors)
+            print(system_state.system_errors)
     except TelemetryValidationError as e:
         raise
 

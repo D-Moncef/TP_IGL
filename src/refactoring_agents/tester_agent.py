@@ -74,9 +74,6 @@ class TesterAgent:
             # 5. PARSE LLM OUTPUT
             # --------------------------------------------------
             try:
-                print("*********************************************************************************")
-                print(output_str)
-                print("*********************************************************************************")
                 output = json.loads(output_str)
             except JSONDecodeError as e:
                 stage = "PARSING_LLM_OUTPUT"
@@ -164,7 +161,7 @@ class TesterAgent:
             # 3. LOAD JUDGE PROMPT
             # --------------------------------------------------
             try:
-                with open("TesterPrompt(Judge the results).txt", "r", encoding="utf-8") as f:
+                with open("src/prompts/TesterPrompt(Judge the results).txt", "r", encoding="utf-8") as f:
                     prompt_template = f.read()
             except FileNotFoundError as e:
                 stage = "LOADING_JUDGE_PROMPT"
@@ -179,7 +176,7 @@ class TesterAgent:
                         + "\n\nRaw pytest execution output :\n"
                         + json.dumps(pytest_result, indent=2)
                         + "\n\n The full content of all test files with their relative paths :\n"
-                        + json.dumps(files["test_file"], indent=2)
+                        + json.dumps(files["test_files"], indent=2)
                         + "\n\nThe full content of all project source files with their relative paths :\n"
                         + json.dumps(files["source_files"], indent=2)
                 )
@@ -220,7 +217,7 @@ class TesterAgent:
             # --------------------------------------------------
             log_experiment(
                 agent_name=self.name,
-                model_used="gemini-2.5-flash",
+                model_used=self.llm.model,
                 action=ActionType.DEBUG,
                 details={
                     "input_prompt": prompt,

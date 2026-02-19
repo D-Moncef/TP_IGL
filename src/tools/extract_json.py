@@ -1,24 +1,59 @@
 import re
+import json
 
-def extract_json(text: str) -> str:
+def extract_json(output: str) -> str:
     """
-    Extract JSON content from a string that may be wrapped
-    in ```json ... ``` or ``` ... ``` markers.
+    Extracts the first valid JSON object from a string.
+    Ignores extra text before/after the JSON.
+
+    Args:
+        output (str): Raw LLM output.
+
+    Returns:
+        str: JSON string safe to parse with json.loads()
+
+    Raises:
+        ValueError: If no JSON object could be found.
     """
-    text = text.strip()
+    # Match the first outermost {...} block
+    stack = []
+    start_idx = None
+    for i, c in enumerate(output):
+        if c == '{':
+            if not stack:
+                start_idx = i
+            stack.append('{')
+        elif c == '}':
+            if stack:
+                stack.pop()
+                if not stack and start_idx is not None:
+                    return output[start_idx:i + 1]
 
-    # Match ```json ... ``` or ``` ... ```
-    pattern = r"^```(?:json)?\s*(.*?)\s*```$"
-    match = re.match(pattern, text, re.DOTALL | re.IGNORECASE)
+    raise ValueError("No JSON object found in LLM output")
 
-    if match:
-        return match.group(1).strip()
+def sanitize_llm_json(output: str) -> str:
+    """
+    Sanitizes a JSON string returned by an LLM:
+    - fixes unescaped newlines inside string values
+    - fixes unescaped quotes inside string values
+    - re-dumps JSON to ensure it's valid
 
-    # No markers → return as-is
-    return text
+    Args:
+        output (str): Raw JSON string from LLM
 
-def sanitize_llm_json(text: str) -> str:
-    text = extract_json(text)  # from earlier
-    # Remove triple-quoted docstrings
-    text = re.sub(r'"""[\s\S]*?"""', '', text)
-    return text.strip()
+    Returns:
+        str: Properly formatted JSON string
+    """
+    try:
+        # Load JSON safely
+        data = json.loads(output)
+    except json.JSONDecodeError as e:
+        # Sometimes LLM breaks quotes/newlines
+        # Replace unescaped newlines inside strings
+        output_fixed = re.sub(r'(?<!\\)\n', r'\\n', output)
+        # Replace unescaped double quotes inside strings (naive fix)
+        output_fixed = re.sub(r'(?<!\\)"', r'\"', output_fixed)
+        data = json.loads(output_fixed)
+
+    # Re-dump to ensure valid JSON
+    return json.dumps(data, ensure_ascii=False)

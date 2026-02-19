@@ -107,7 +107,7 @@ class AuditorAgent:
         # --------------------------------------------------
             log_experiment(
                 agent_name=self.name,
-                model_used="gemini-2.5-flash",
+                model_used=self.llm.model,
                 action=ActionType.ANALYSIS,
                 details={
                     "input_prompt": prompt,

@@ -3,7 +3,7 @@ import os
 import uuid
 from datetime import datetime
 from enum import Enum
-
+from typing import Union
 # Chemin du fichier de logs
 LOG_FILE = os.path.join("logs", "experiment_data.json")
 
@@ -16,7 +16,7 @@ class ActionType(str, Enum):
     DEBUG = "DEBUG"             # Analyse d'erreurs d'exécution
     FIX = "FIX"                 # Application de correctifs
 
-def log_experiment(agent_name: str, model_used: str, action: ActionType, details: dict, status: str):
+def log_experiment(agent_name: str, model_used: str, action: Union[ActionType,str], details: dict, status: str):
     """
     Enregistre une interaction d'agent pour l'analyse scientifique.
 
@@ -36,7 +36,7 @@ def log_experiment(agent_name: str, model_used: str, action: ActionType, details
     valid_actions = [a.value for a in ActionType]
     if isinstance(action, ActionType):
         action_str = action.value
-    elif action in valid_actions:
+    elif action in valid_actions or action == "STARTUP":
         action_str = action
     else:
         raise ValueError(f"❌ Action invalide : '{action}'. Utilisez la classe ActionType (ex: ActionType.FIX).")

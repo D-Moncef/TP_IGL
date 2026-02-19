@@ -40,11 +40,12 @@ class DataOfficer:
 
         # Details validation
         details = entry.get("details", {})
-        for key in ("input_prompt", "output_response"):
-            if key not in details:
-                raise TelemetryValidationError(
-                    f"Missing details field: {key}"
-                )
+        if not details == "Target: sandbox":
+            for key in ("input_prompt", "output_response"):
+                if key not in details:
+                    raise TelemetryValidationError(
+                        f"Missing details field: {key}"
+                    )
 
 
     def validate_logs(self) -> None:

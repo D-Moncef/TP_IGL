@@ -29,9 +29,7 @@ def write_file(path_to_file: str, content: str, test: bool) -> bool:
         raise Exception(f"File {full_path.name} format is not valid (must be .py)")
 
     if not test:
-        if not full_path.exists():
-            raise Exception(f"Path {path_to_file} does not exist")
-
+        full_path.parent.mkdir(parents=True, exist_ok=True)
     else:
         if not (full_path.name.startswith("test_") or full_path.name.endswith("_test.py")):
             raise Exception(f"Path {path_to_file} is not a valid test file path")

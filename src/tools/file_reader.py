@@ -46,7 +46,7 @@ def read_dir_separate(path_to_dir: str):
 
     for file_path in path.rglob("*.py"):
         try:
-            file_content = read_file(path_to_dir)  # your existing read_file function
+            file_content = read_file(str(file_path))
             
             # Decide if it is a test file
             if "test" in file_path.stem.lower() or "tests" in file_path.parts:
