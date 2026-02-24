@@ -6,7 +6,7 @@ from src.tools.file_reader import read_dir, read_dir_separate
 from src.tools.file_writer import write_file
 from src.tools.extract_json import extract_json, sanitize_llm_json
 from src.tools.test_sendbox import run_pytest
-from core.state import SystemState
+from src.state import SystemState
 from src.utils.logger import ActionType
 import json
 

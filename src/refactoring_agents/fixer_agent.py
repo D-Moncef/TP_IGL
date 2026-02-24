@@ -5,7 +5,7 @@ from src.llm.llm_service import LLMService
 from src.tools.file_reader import read_dir, read_dir_separate
 from src.tools.file_writer import write_file
 from src.tools.extract_json import extract_json, sanitize_llm_json
-from core.state import SystemState
+from src.state import SystemState
 import json
 import os
 

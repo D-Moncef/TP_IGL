@@ -1,5 +1,5 @@
 # src/orchestrator/orchestrator.py
-from core.state import (
+from state.state import (
     SystemState, SystemPhase, ConstructionPhase, RepairPhase,
     FixerMode, TesterMode, Agent
 )
