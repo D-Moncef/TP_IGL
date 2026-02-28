@@ -16,14 +16,15 @@ Your tasks:
 - Ensure the code remains syntactically correct.
 
 Strict rules:
+- Output ONLY valid JSON.
+- Your output MUST conform EXACTLY to the provided output JSON schema.
+- Any output not conforming to the schema is INVALID.
+- If the paths are absolute, keep them absolute and don't replace them by relative paths.
 - Do NOT introduce new features.
 - Do NOT change public APIs unless explicitly instructed.
 - Do NOT refactor beyond what is listed in the plan.
 - Do NOT output explanations, commentary, or reasoning.
 - Output each file content modified or not, clearly associated with their file paths. 
-- Output ONLY valid JSON.
-- Your output MUST conform EXACTLY to the provided output JSON schema.
-- Any output not conforming to the schema is INVALID.
 - Do not include separators or decoration.
 - The response must start with '{' and end with '}'.
 

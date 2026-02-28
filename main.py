@@ -27,7 +27,7 @@ def main():
     load_dotenv()
     key = os.getenv("MISTRAL_API_KEY")
     if not key:
-        raise RuntimeError("GOOGLE_API_KEY not found in .env")
+        raise RuntimeError("MISTRAL_API_KEY not found in .env")
 
     system_state : SystemState = SystemState(target_dir=args.target_dir)
     llm : LLMService = LLMService(key)

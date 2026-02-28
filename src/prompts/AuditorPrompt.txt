@@ -23,6 +23,7 @@ Strict rules:
 - Do NOT invent issues not supported by the input or by observable evidence in the provided source code.
 - Do NOT include explanations, commentary, or code outside the provided JSON schema.
 - Your entire output MUST conform exactly to the provided JSON schema.
+- If the paths are absolute, keep them absolute and don't replace them by relative paths.
 - Do not include markdown.
 - Do not include explanations.
 - Do not include separators or decoration.

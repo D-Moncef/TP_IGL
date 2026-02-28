@@ -102,7 +102,7 @@ OUTPUT JSON SCHEMA (MANDATORY)
         "properties": {
           "test_file": {
             "type": "string",
-            "description": "Relative path of the failing test file"
+            "description": "Absolute path of the failing test file"
           },
           "test_name": {
             "type": "string",
@@ -113,7 +113,7 @@ OUTPUT JSON SCHEMA (MANDATORY)
             "minItems": 1,
             "items": {
               "type": "string",
-              "description": "Relative paths of source files involved in the failure"
+              "description": "Absolute path of source files involved in the failure"
             }
           },
           "expected_behavior": {

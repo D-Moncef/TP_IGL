@@ -4,10 +4,11 @@ from src.utils.logger import log_experiment, ActionType
 from src.llm.llm_service import LLMService
 from src.tools.file_reader import read_dir, read_dir_separate
 from src.tools.file_writer import write_file
-from src.tools.extract_json import extract_json, sanitize_llm_json
+from src.tools.extract_json import extract_json, sanitize_llm_json, strip_markdown_fences
 from src.tools.test_sendbox import run_pytest
 from src.state.state import SystemState
 from src.utils.logger import ActionType
+from pathlib import Path
 import json
 
 class TesterAgent:
@@ -59,16 +60,20 @@ class TesterAgent:
             # --------------------------------------------------
             # 4. CALL LLM
             # --------------------------------------------------
-            try:
-                output_str = self.llm.generate(prompt)
-                output_str = extract_json(output_str)
-                output_str = sanitize_llm_json(output_str)
-            except TimeoutError as e:
-                stage = "CALLING_LLM"
-                raise RuntimeError("LLM request timed out") from e
-            except Exception as e:
-                stage = "CALLING_LLM"
-                raise RuntimeError("LLM generation failed") from e
+            Error = True
+            while(Error) :
+                try:
+                    output_str = self.llm.generate(prompt)
+                    output_str = strip_markdown_fences(output_str)
+                    output_str = extract_json(output_str)
+                    output_str = sanitize_llm_json(output_str)
+                    Error = False
+                except TimeoutError as e:
+                    stage = "CALLING_LLM"
+                    #raise RuntimeError("LLM request timed out") from e
+                except Exception as e:
+                    stage = "CALLING_LLM"
+                    #raise RuntimeError("LLM generation failed") from e
 
             # --------------------------------------------------
             # 5. PARSE LLM OUTPUT
@@ -88,9 +93,29 @@ class TesterAgent:
             # 7. WRITE TEST FILES
             # --------------------------------------------------
             try:
+                target_root = Path(state.target_dir).resolve()
                 for file in output["tests"]:
-                        file_path = ("sandbox/"+file["file_path"])
-                        write_file(file_path, file["content"], True,state.target_dir)
+
+                    relative_path = Path(file["file_path"])
+
+                    # If LLM returned absolute path → strip to filename only
+                    if relative_path.is_absolute():
+                        relative_path = Path(relative_path.name)
+
+                    # Build safe full path inside target_root
+                    safe_path = (target_root / relative_path).resolve()
+
+                    # Prevent path escape
+                    if target_root not in safe_path.parents and safe_path != target_root:
+                        raise RuntimeError("LLM attempted path escape")
+
+                    # Write file (write_file expects string)
+                    write_file(
+                        str(safe_path),
+                        file["content"],
+                        True,
+                        str(target_root)
+                    )
             except PermissionError as e:
                 stage = "WRITING_TEST_FILES"
                 raise RuntimeError("No permission to write a test files") from e
@@ -187,16 +212,20 @@ class TesterAgent:
             # --------------------------------------------------
             # 5. CALL LLM
             # --------------------------------------------------
-            try:
-                output_str = self.llm.generate(prompt)
-                output_str = extract_json(output_str)
-                output_str = sanitize_llm_json(output_str)
-            except TimeoutError as e:
-                stage = "CALLING_LLM"
-                raise RuntimeError("LLM request timed out") from e
-            except Exception as e:
-                stage = "CALLING_LLM"
-                raise RuntimeError("LLM generation failed") from e
+            Error = True
+            while(Error):
+                try:
+                    output_str = self.llm.generate(prompt)
+                    output_str = strip_markdown_fences(output_str)
+                    output_str = extract_json(output_str)
+                    output_str = sanitize_llm_json(output_str)
+                    Error = False
+                except TimeoutError as e:
+                    stage = "CALLING_LLM"
+                    #raise RuntimeError("LLM request timed out") from e
+                except Exception as e:
+                    stage = "CALLING_LLM"
+                    #raise RuntimeError("LLM generation failed") from e
 
             # --------------------------------------------------
             # 6. PARSE LLM OUTPUT

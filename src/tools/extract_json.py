@@ -1,5 +1,24 @@
 import re
 import json
+import os
+from pathlib import Path
+
+def strip_markdown_fences(output: str) -> str:
+    """
+    Removes Markdown code fences like ```json ... ```
+    ONLY if they exist.
+    Leaves text untouched otherwise.
+    """
+    text = output.strip()
+
+    if text.startswith("```"):
+        # Remove opening fence
+        text = re.sub(r"^```[a-zA-Z]*\n?", "", text)
+
+        # Remove closing fence
+        text = re.sub(r"\n?```$", "", text)
+
+    return text.strip()
 
 def extract_json(output: str) -> str:
     """
@@ -57,3 +76,13 @@ def sanitize_llm_json(output: str) -> str:
 
     # Re-dump to ensure valid JSON
     return json.dumps(data, ensure_ascii=False)
+
+def is_subpath(parent: Path, child: Path) -> bool:
+    parent = parent.resolve()
+    child = child.resolve()
+
+    try:
+        child.relative_to(parent)
+        return True
+    except ValueError:
+        return False

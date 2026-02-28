@@ -9,19 +9,15 @@ def run_pytest(target_dir: str):
     Returns structured results.
     """
     try:
-        # Compute the project root (assumes target_dir is inside the project)
-        target_path = Path(target_dir).resolve()
-        project_root = target_path.parent
-
-        # Prepare environment with PYTHONPATH
+        target_path = Path(target_dir).resolve()  # .../sandbox/hidden_dataset
         env = os.environ.copy()
-        env["PYTHONPATH"] = str(project_root)
-
+        env["PYTHONPATH"] = str(target_path.parent)  # .../sandbox
         result = subprocess.run(
             ["pytest", str(target_path)],
             capture_output=True,
             text=True,
-            env=env  # pass the updated environment
+            env=env,
+            cwd=str(target_path)  # run inside hidden_dataset
         )
 
         return {

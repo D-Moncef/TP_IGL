@@ -4,8 +4,9 @@ from src.utils.logger import log_experiment, ActionType
 from src.llm.llm_service import LLMService
 from src.tools.file_reader import read_dir, read_dir_separate
 from src.tools.file_writer import write_file
-from src.tools.extract_json import extract_json, sanitize_llm_json
+from src.tools.extract_json import extract_json, sanitize_llm_json, strip_markdown_fences, is_subpath
 from src.state.state import SystemState
+from pathlib import Path
 import json
 import os
 
@@ -89,9 +90,9 @@ class FixerAgent:
                             prompt_template
                             + "\n\nFixing instructions produced by tester :\n"
                             + json.dumps(state.tester_state.output, indent=2)
-                            + "\n\nThe full content of all project source files with their relative paths :\n"
+                            + "\n\nThe full content of all project source files with their paths :\n"
                             + json.dumps(files["source_files"], indent=2)
-                            + "\n\n The full content of all test files with their relative paths :\n"
+                            + "\n\n The full content of all test files with their paths :\n"
                             + json.dumps(files["test_files"], indent=2)
                     )
                 except (TypeError, ValueError) as e:
@@ -101,16 +102,20 @@ class FixerAgent:
             # --------------------------------------------------
             # 4. CALL LLM
             # --------------------------------------------------
-            try:
-                output_str = self.llm.generate(prompt)
-                output_str = extract_json(output_str)
-                output_str = sanitize_llm_json(output_str)
-            except TimeoutError as e:
-                stage = "CALLING_LLM"
-                raise RuntimeError("LLM request timed out") from e
-            except Exception as e:
-                stage = "CALLING_LLM"
-                raise RuntimeError("LLM generation failed") from e
+            Error = True
+            while(Error) :
+                try:
+                    output_str = self.llm.generate(prompt)
+                    output_str = strip_markdown_fences(output_str)
+                    output_str = extract_json(output_str)
+                    output_str = sanitize_llm_json(output_str)
+                    Error = False
+                except TimeoutError as e:
+                    stage = "CALLING_LLM"
+                    #raise RuntimeError("LLM request timed out") from e
+                except Exception as e:
+                    stage = "CALLING_LLM"
+                    #raise RuntimeError("LLM generation failed") from e
 
             # --------------------------------------------------
             # 5. PARSE LLM OUTPUT
@@ -130,52 +135,47 @@ class FixerAgent:
             # 7. WRITE MODIFIED FILES
             # --------------------------------------------------
             try:
-                target_dir = os.path.abspath(state.target_dir)
+                target_root = Path(state.target_dir).resolve()
+
                 if state.fixer_state.mode.name == "REFACTOR":
                     for file in output["files"]:
 
-                        relative_path = file["file_path"]
-                        # Normalize
-                        relative_path = os.path.normpath(relative_path)
+                        relative_path = Path(file["file_path"]).resolve()
 
-                        # If LLM returned absolute path → strip to relative
-                        if os.path.isabs(relative_path):
-                            relative_path = os.path.relpath(relative_path, target_dir)
+                        relative_path = relative_path.resolve().relative_to(target_root)
 
-                        relative_path = relative_path.lstrip("./")  # remove leading ./ if present
-                        if relative_path.startswith("sandbox" + os.sep):
-                            relative_path = relative_path[len("sandbox") + 1:]  # remove leading "sandbox/"
+                        safe_path = (target_root / relative_path).resolve()
 
-
-                        safe_path = os.path.abspath(os.path.join(target_dir, relative_path))
-
-                        # Verify no escape attempt
-                        if os.path.commonpath([safe_path, target_dir]) != target_dir:
+                        # Prevent directory escape
+                        if target_root not in safe_path.parents and safe_path != target_root:
                             raise RuntimeError("LLM attempted path escape")
-                        write_file(safe_path, file["content"], False,state.target_dir)
+
+                        write_file(
+                            str(safe_path),
+                            file["content"],
+                            False,
+                            str(target_root)
+                        )
                 else:
                     for file in output["files"]:
 
-                        relative_path = file["path"]
-                        # Normalize
-                        relative_path = os.path.normpath(relative_path)
+                        relative_path = Path(file["path"])
 
-                        # If LLM returned absolute path → strip to relative
-                        if os.path.isabs(relative_path):
-                            relative_path = os.path.relpath(relative_path, target_dir)
+                        if is_subpath(target_root, relative_path.resolve()) :
+                            relative_path = relative_path.resolve().relative_to(target_root)
 
-                        relative_path = relative_path.lstrip("./")  # remove leading ./ if present
-                        if relative_path.startswith("sandbox" + os.sep):
-                            relative_path = relative_path[len("sandbox") + 1:]  # remove leading "sandbox/"
+                        safe_path = (target_root / relative_path).resolve()
 
-
-                        safe_path = os.path.abspath(os.path.join(target_dir, relative_path))
-
-                        # Verify no escape attempt
-                        if os.path.commonpath([safe_path, target_dir]) != target_dir:
+                        if target_root not in safe_path.parents and safe_path != target_root:
                             raise RuntimeError("LLM attempted path escape")
-                        if (file["changed"]):
-                            write_file(safe_path, file["content"], False,state.target_dir)
+
+                        if file.get("changed", False):
+                            write_file(
+                                str(safe_path),
+                                file["content"],
+                                False,
+                                str(target_root)
+                            )
             except PermissionError as e:
                 stage = "WRITING_MODIFIED_FILES"
                 raise RuntimeError("No permission to write a modified files") from e

@@ -4,7 +4,7 @@ from src.utils.logger import log_experiment, ActionType
 from src.llm.llm_service import LLMService
 from src.tools.file_reader import read_dir
 from src.tools.pylint_inal import analyse_file
-from src.tools.extract_json import extract_json, sanitize_llm_json
+from src.tools.extract_json import extract_json, sanitize_llm_json, strip_markdown_fences
 from src.state.state import SystemState
 import json
 
@@ -77,16 +77,20 @@ class AuditorAgent:
         # --------------------------------------------------
         # 5. CALL LLM
         # --------------------------------------------------
-            try:
-                output_str = self.llm.generate(prompt)
-                output_str = extract_json(output_str)
-                output_str = sanitize_llm_json(output_str)
-            except TimeoutError as e:
-                stage = "CALLING_LLM"
-                raise RuntimeError("LLM request timed out") from e
-            except Exception as e:
-                stage = "CALLING_LLM"
-                raise RuntimeError("LLM generation failed") from e
+            Error = True
+            while(Error) :
+                try:
+                    output_str = self.llm.generate(prompt)
+                    output_str = strip_markdown_fences(output_str)
+                    output_str = extract_json(output_str)
+                    output_str = sanitize_llm_json(output_str)
+                    Error = False
+                except TimeoutError as e:
+                    stage = "CALLING_LLM"
+                    #raise RuntimeError("LLM request timed out") from e
+                except Exception as e:
+                    stage = "CALLING_LLM"
+                    #raise RuntimeError("LLM generation failed") from e
 
         # --------------------------------------------------
         # 6. PARSE LLM OUTPUT
