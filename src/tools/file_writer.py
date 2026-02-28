@@ -6,7 +6,7 @@ def normalize_newlines(text: str) -> str:
     """
     return text.encode("utf-8").decode("unicode_escape")
 
-def write_file(path_to_file: str, content: str, test: bool) -> bool:
+def write_file(path_to_file: str, content: str, test: bool,sandbox_path: str | None = None) -> bool:
     """
     Write a Python file inside the sandbox.
 
@@ -18,9 +18,13 @@ def write_file(path_to_file: str, content: str, test: bool) -> bool:
     """
 
     path = Path(path_to_file)
-
-    sandbox = Path("sandbox").resolve()
     full_path = path.resolve()
+
+    # Use provided sandbox or default
+    if sandbox_path:
+        sandbox = Path(sandbox_path).resolve()
+    else:
+        sandbox = Path("sandbox").resolve()
 
     if sandbox not in full_path.parents:
         raise Exception("File write outside sandbox is forbidden")

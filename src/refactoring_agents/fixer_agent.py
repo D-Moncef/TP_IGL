@@ -5,7 +5,7 @@ from src.llm.llm_service import LLMService
 from src.tools.file_reader import read_dir, read_dir_separate
 from src.tools.file_writer import write_file
 from src.tools.extract_json import extract_json, sanitize_llm_json
-from src.state import SystemState
+from src.state.state import SystemState
 import json
 import os
 
@@ -142,16 +142,17 @@ class FixerAgent:
                         if os.path.isabs(relative_path):
                             relative_path = os.path.relpath(relative_path, target_dir)
 
-                        # If LLM returned something starting with target_dir → strip it
-                        if relative_path.startswith(state.target_dir + os.sep):
-                            relative_path = os.path.relpath(relative_path, state.target_dir)
+                        relative_path = relative_path.lstrip("./")  # remove leading ./ if present
+                        if relative_path.startswith("sandbox" + os.sep):
+                            relative_path = relative_path[len("sandbox") + 1:]  # remove leading "sandbox/"
+
 
                         safe_path = os.path.abspath(os.path.join(target_dir, relative_path))
 
                         # Verify no escape attempt
                         if os.path.commonpath([safe_path, target_dir]) != target_dir:
                             raise RuntimeError("LLM attempted path escape")
-                        write_file(safe_path, file["content"], False)
+                        write_file(safe_path, file["content"], False,state.target_dir)
                 else:
                     for file in output["files"]:
 
@@ -163,9 +164,10 @@ class FixerAgent:
                         if os.path.isabs(relative_path):
                             relative_path = os.path.relpath(relative_path, target_dir)
 
-                        # If LLM returned something starting with target_dir → strip it
-                        if relative_path.startswith(state.target_dir + os.sep):
-                            relative_path = os.path.relpath(relative_path, state.target_dir)
+                        relative_path = relative_path.lstrip("./")  # remove leading ./ if present
+                        if relative_path.startswith("sandbox" + os.sep):
+                            relative_path = relative_path[len("sandbox") + 1:]  # remove leading "sandbox/"
+
 
                         safe_path = os.path.abspath(os.path.join(target_dir, relative_path))
 
@@ -173,7 +175,7 @@ class FixerAgent:
                         if os.path.commonpath([safe_path, target_dir]) != target_dir:
                             raise RuntimeError("LLM attempted path escape")
                         if (file["changed"]):
-                            write_file(safe_path, file["content"], False)
+                            write_file(safe_path, file["content"], False,state.target_dir)
             except PermissionError as e:
                 stage = "WRITING_MODIFIED_FILES"
                 raise RuntimeError("No permission to write a modified files") from e

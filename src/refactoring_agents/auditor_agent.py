@@ -5,7 +5,7 @@ from src.llm.llm_service import LLMService
 from src.tools.file_reader import read_dir
 from src.tools.pylint_inal import analyse_file
 from src.tools.extract_json import extract_json, sanitize_llm_json
-from src.state import SystemState
+from src.state.state import SystemState
 import json
 
 class AuditorAgent:

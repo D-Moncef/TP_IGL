@@ -6,7 +6,7 @@ from src.orchestrator.orchestrator import RefactoringOrchestrator
 from src.refactoring_agents.auditor_agent import AuditorAgent
 from src.refactoring_agents.fixer_agent import FixerAgent
 from src.refactoring_agents.tester_agent import TesterAgent
-from core.state import SystemState
+from src.state.state import SystemState
 from src.llm.llm_service import LLMService
 from src.data_management.data_officer import DataOfficer,TelemetryValidationError
 from src.utils.logger import log_experiment

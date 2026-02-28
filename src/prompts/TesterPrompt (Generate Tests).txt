@@ -33,16 +33,16 @@ Strict rules:
 - Output MUST conform exactly to the JSON schema below.
 - Do NOT include markdown, comments, or explanations outside the JSON.
 - Do NOT include separators or decoration.
-- All quotes inside strings MUST be escaped.
-- Do NOT use ``` or triple-quoted strings.
-- All newline characters inside strings MUST be escaped as \\n.
-- Do NOT include literal newlines inside JSON strings.
-- Your response must start with '{' and end with '}'. 
+- Your response must start with '{' and end with '}'.
 - Do NOT modify production source code.
 - Do NOT execute code.
 - Do NOT adapt tests to match the current buggy behavior.
 - Do NOT invent new features or APIs.
 - Each test file must be complete and syntactically valid.
+- All generated Python code must parse successfully using ast.parse().
+- Multi-line strings must use valid Python syntax (triple quotes or escaped newline characters).
+- All string literals must be properly closed.
+- All parentheses, brackets, and indentation must be correct.
 
 -------------------------------
 OUTPUT JSON SCHEMA (MANDATORY)
